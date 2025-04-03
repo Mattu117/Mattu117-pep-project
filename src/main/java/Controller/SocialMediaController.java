@@ -40,6 +40,10 @@ public class SocialMediaController {
         app.post("/login", this::postLoginHandler);
         app.post("/messages", this::postMessagesHandler);
         app.get("/messages", this::getAllMessagesHandler);
+        app.get("/messages/{message_id}", this::getMessageByIdHandler);
+        app.delete("/messages/{message_id}", this::deleteMessageHandler);
+        app.patch("/messages/{message_id}", this::patchMessageByIdHandler);
+        app.get("/accounts/{account_id}/messages",this::getAccountMessagesHandler);
         return app;
     }
 
@@ -84,6 +88,7 @@ public class SocialMediaController {
         }
     }
 
+    // Posting messages
     private void postMessagesHandler(Context context)throws JsonProcessingException{
         ObjectMapper mapper = new ObjectMapper();
         Message message = mapper.readValue(context.body(), Message.class);
@@ -98,8 +103,44 @@ public class SocialMediaController {
         }
     }
 
+    // Gets all messages
     private void getAllMessagesHandler(Context context){
         List<Message> messages = messageService.getAllMessages();
+        context.json(messages);
+    }
+
+    // Gets message by Id
+    private void getMessageByIdHandler(Context context){
+        Message message = messageService.getMessageById(Integer.valueOf(context.pathParam("message_id")));
+
+        if(message != null){
+            context.json(message);
+        }
+    }
+
+    private void deleteMessageHandler(Context context){
+        Message message = messageService.deleteMessage(Integer.valueOf(context.pathParam("message_id")));
+        if(message != null){
+            context.json(message);
+        }
+    }
+
+    private void patchMessageByIdHandler(Context context)throws JsonProcessingException{
+        ObjectMapper mapper = new ObjectMapper();
+        Message message_text = mapper.readValue(context.body(), Message.class);
+
+        Message updatedMessage = messageService.updateMessage(Integer.valueOf(context.pathParam("message_id")),message_text.getMessage_text());
+        
+        if(updatedMessage != null){
+            context.json(mapper.writeValueAsString(updatedMessage));
+        }
+        else{
+            context.status(400);
+        }
+    }
+
+    private void getAccountMessagesHandler(Context context){
+        List<Message> messages = messageService.getAccountMessages(Integer.valueOf(context.pathParam("account_id")));
         context.json(messages);
     }
 
